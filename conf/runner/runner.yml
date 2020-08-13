@@ -1,0 +1,29 @@
+type: Runner
+
+dataloader:
+  type: DataLoader
+  params:
+    num_workers: 48
+    batch_size: 256
+
+optimizer:
+  type: SGD
+  params:
+    learning_rate: 1e-2
+    momentum: .9
+
+scheduler:
+  type: MultiStepLR
+  params:
+    gamma: .1
+
+trainer:
+  type: Trainer
+  params:
+    max_epochs: 128
+    gpus: -1
+    distributed_backend: "ddp"
+
+experiments:
+  name: martin_deephash
+  output_dir: output/runs  

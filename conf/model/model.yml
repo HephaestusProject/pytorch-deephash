@@ -1,0 +1,3 @@
+type: DeepHash
+params:
+  hash_bits: 48
