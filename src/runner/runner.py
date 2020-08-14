@@ -4,6 +4,7 @@ from omegaconf import DictConfig
 from pytorch_lightning.core import LightningModule
 from torch.optim import SGD
 from torch.optim.lr_scheduler import MultiStepLR
+
 from src.runner.metric import cross_entropy
 
 
@@ -195,7 +196,7 @@ if __name__ == "__main__":
         max_epochs=2,
         progress_bar_refresh_rate=0,
         weights_summary=None,
-        gpus=-1,
+        gpus=[0],
         early_stop_callback=False,
         checkpoint_callback=False,
         deterministic=True,
@@ -206,4 +207,3 @@ if __name__ == "__main__":
     trainer.fit(model=runner, train_dataloader=train_dataloader, val_dataloaders=test_dataloader)
     final_loss = trainer.running_loss.last().item()
     print(final_loss)
-
