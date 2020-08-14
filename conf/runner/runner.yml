@@ -24,6 +24,14 @@ trainer:
     gpus: -1
     distributed_backend: "ddp"
 
+stopper:
+    type: EarlyStopping
+    params:
+        monitor: val_acc
+        mode: max
+        patience: 10
+        verbose: True
+
 experiments:
   name: martin_deephash
   output_dir: output/runs  

@@ -1,0 +1,7 @@
+
+1. pytorch lightning의 모듈을 테스트하기 어렵다.
+-> runner를 테스트하면 충분할까?
+-> runner를 테스트하려면 Trainer의 Interface를 알아야하지 않을까?
+
+
+1.1. 일단 torchsummary로 forward 확인

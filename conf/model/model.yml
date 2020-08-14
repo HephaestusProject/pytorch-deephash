@@ -1,3 +1,6 @@
 type: DeepHash
 params:
+  width: 227
+  height: 227
+  channels: 3
   hash_bits: 48
