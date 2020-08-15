@@ -16,13 +16,13 @@ import pytorch_lightning as pl
 import torch
 
 from pathlib import Path
-from typing import Dict, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 from omegaconf import OmegaConf
 
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import Callback, ModelCheckpoint, LearningRateLogger, EarlyStopping
-from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.loggers.wandb import WandbLogger
 
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
@@ -31,8 +31,6 @@ from src.dataset.dataset_registry import DataSetRegistry
 from src.model.net import DeepHash
 from src.runner.runner import Runner
 from src.utils import get_next_version
-
-# from src.utils.preprocessing import PreProcessor
 
 
 def get_config(hparams: Dict) -> omegaconf.DictConfig:
@@ -74,12 +72,14 @@ def get_checkpoint_callback(
 
 def get_wandb_logger(run_dir: pathlib.Path, config: omegaconf.DictConfig) -> Tuple[WandbLogger]:
     next_version = str(run_dir.parts[-1])
-
+    id = run_dir.parts[-1]
     wandb_logger = WandbLogger(
+        id=id,
         name=str(config.runner.experiments.name),
         save_dir=str(run_dir),
-        offline=True,
+        offline=False,
         version=next_version,
+        project=str(config.runner.experiments.name),
     )
 
     return wandb_logger
@@ -97,12 +97,27 @@ def get_early_stopper(config: omegaconf.DictConfig):
 
 def get_data_loaders(config: omegaconf.DictConfig) -> Tuple[DataLoader, DataLoader]:
 
+    train_transform = transforms.Compose(
+        [
+            transforms.Resize(256),
+            transforms.RandomCrop(227),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+        ]
+    )
+
+    test_transform = transforms.Compose(
+        [
+            transforms.Resize(227),
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+        ]
+    )
+
     dataset = DataSetRegistry.get(config.dataset.type)
     train_dataset = dataset(
-        root=config.dataset.params.path.train,
-        train=True,
-        transform=transforms.ToTensor(),
-        download=True,
+        root=config.dataset.params.path.train, train=True, transform=train_transform, download=True,
     )
     train_dataloader = DataLoader(
         dataset=train_dataset,
@@ -112,10 +127,7 @@ def get_data_loaders(config: omegaconf.DictConfig) -> Tuple[DataLoader, DataLoad
         shuffle=True,
     )
     test_dataset = dataset(
-        root=config.dataset.params.path.test,
-        train=False,
-        transform=transforms.ToTensor(),
-        download=True,
+        root=config.dataset.params.path.test, train=False, transform=test_transform, download=True,
     )
     test_dataloader = DataLoader(
         dataset=test_dataset,
@@ -152,16 +164,16 @@ def train(hparams: dict):
     runner: src.runner.runner.Runner = Runner(model=model, config=config)
 
     trainer: pl.Trainer = Trainer(
-        distributed_backend=config.runner.trainer.distributed_backend,
+        distributed_backend=config.runner.trainer.params.distributed_backend,
         fast_dev_run=False,
-        gpus=config.runner.trainer.gpus,
+        gpus=config.runner.trainer.params.gpus,
         amp_level="O2",
         logger=wandb_logger,
         row_log_interval=10,
         callbacks=[lr_logger],
         early_stop_callback=early_stopper,
         checkpoint_callback=checkpointer,
-        max_epochs=config.runner.max_epochs,
+        max_epochs=config.runner.trainer.params.max_epochs,
         weights_summary="top",
         reload_dataloaders_every_epoch=False,
         resume_from_checkpoint=None,

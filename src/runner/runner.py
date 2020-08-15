@@ -12,24 +12,21 @@ class Runner(LightningModule):
     def __init__(self, model: nn.Module, config: DictConfig):
         super().__init__()
         self.model = model
-        self.hparams.update({"dataset": f"{config.dataset.type}"})
-        self.hparams.update({"model": f"{config.model.type}"})
-        self.hparams.update(config.model.params)
-        self.hparams.update(config.runner.dataloader.params)
-        self.hparams.update({"optimizer": f"{config.runner.optimizer.params.type}"})
-        self.hparams.update(config.runner.optimizer.params)
-        self.hparams.update({"scheduler": f"{config.runner.scheduler.type}"})
-        self.hparams.update({"scheduler_gamma": f"{config.runner.scheduler.params.gamma}"})
-        self.hparams.update(config.runner.trainer.params)
+        self.config = config
+        self.hparams.update(config)
         print(self.hparams)
 
     def forward(self, x):
         return self.model(x)
 
     def configure_optimizers(self):
-        opt = SGD(params=self.model.parameters(), lr=self.hparams.learning_rate)
+        opt = SGD(
+            params=self.model.parameters(), lr=self.config.runner.optimizer.params.learning_rate
+        )
         scheduler = MultiStepLR(
-            opt, milestones=[self.hparams.max_epochs], gamma=self.hparams.scheduler_gamma
+            opt,
+            milestones=[self.config.runner.trainer.params.max_epochs],
+            gamma=self.config.runner.scheduler.params.gamma,
         )
         return [opt], [scheduler]
 
@@ -39,13 +36,14 @@ class Runner(LightningModule):
         loss = cross_entropy(y_hat, y)
         prediction = torch.argmax(y_hat, dim=1)
         acc = (y == prediction).float().mean()
-
-        return {"loss": loss, "train_acc": acc}
+        logger_log = {"train_loss": loss, "train_acc": acc}
+        return {"loss": loss, "train_acc": acc, "log": logger_log}
 
     def training_epoch_end(self, outputs):
         avg_loss = torch.stack([x["loss"] for x in outputs]).mean()
         avg_acc = torch.stack([x["train_acc"] for x in outputs]).mean()
         tqdm_dict = {"train_acc": avg_acc, "train_loss": avg_loss}
+        logger_log = {"train_loss": avg_loss, "train_acc": avg_acc}
         return {**tqdm_dict, "progress_bar": tqdm_dict}
 
     def validation_step(self, batch, batch_idx):
@@ -63,7 +61,8 @@ class Runner(LightningModule):
         val_loss = total_loss / total_count
         val_acc = total_n_correct_pred / total_count
         tqdm_dict = {"val_acc": val_acc, "val_loss": val_loss}
-        return {**tqdm_dict, "progress_bar": tqdm_dict}
+        logger_log = {"valid_loss": val_loss, "valid_acc": val_acc}
+        return {**tqdm_dict, "progress_bar": tqdm_dict, "log": logger_log}
 
     def test_step(self, batch, batch_idx):
         x, y = batch
