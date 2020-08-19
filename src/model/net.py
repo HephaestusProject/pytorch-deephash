@@ -38,6 +38,21 @@ class DeepHash(nn.Module):
         result = self.Linear2(features)
         return features, result
 
+    def inference(self, x: torch.Tensor):
+        self.eval()
+
+        device = self.parameters().__next__().device
+
+        x = x.to(device)
+
+        full_batch_output = torch.FloatTensor()
+        full_batch_label = torch.LongTensor()
+
+        fine_grain, _ = self(x)
+        coarse_grain = torch.round(fine_grain)
+
+        return coarse_grain, fine_grain
+
     def summary(self):
         device = str(self.parameters().__next__().device)
         torch_summary(self, input_size=(self.channels, self.height, self.width), device=device)

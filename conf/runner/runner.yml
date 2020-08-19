@@ -33,5 +33,5 @@ stopper:
         verbose: True
 
 experiments:
-  name: martin_deephash
+  name: deephash
   output_dir: output/runs  
