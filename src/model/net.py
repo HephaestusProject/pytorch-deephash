@@ -45,9 +45,6 @@ class DeepHash(nn.Module):
 
         x = x.to(device)
 
-        full_batch_output = torch.FloatTensor()
-        full_batch_label = torch.LongTensor()
-
         fine_grain, _ = self(x)
         coarse_grain = torch.round(fine_grain)
 

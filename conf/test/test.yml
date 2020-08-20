@@ -1,0 +1,3 @@
+type: Test
+params:
+  weight_path: "./DeepHash_epoch=65-tr_loss=0.00-val_loss=0.23-tr_acc=0.00-val_acc=0.93.ckpt"

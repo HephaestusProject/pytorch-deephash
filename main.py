@@ -5,7 +5,9 @@ Usage:
 Available commands:    
     train
     predict
-    test
+    evaluate
+    inference
+    build_database
 Options:
     -h --help     Show this.
 See 'python main.py <command> --help' for more information on a specific command.
@@ -22,6 +24,10 @@ if __name__ == "__main__":
         from train import __doc__, train
 
         train(docopt(__doc__, argv=argv, types={"path": Path}))
+    elif args["<command>"] == "build_database":
+        from database import __doc__, generate_database
+
+        generate_database(docopt(__doc__, argv=argv, types={"path": Path}))
 
     else:
         raise NotImplementedError(f"Command does not exist: {args['<command>']}")

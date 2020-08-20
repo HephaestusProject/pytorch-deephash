@@ -34,4 +34,4 @@ stopper:
 
 experiments:
   name: deephash
-  output_dir: output/runs  
+  output_dir: output/runs
