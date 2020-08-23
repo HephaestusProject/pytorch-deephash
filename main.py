@@ -6,8 +6,8 @@ Available commands:
     train
     predict
     evaluate
-    inference
     build_database
+    serving
 Options:
     -h --help     Show this.
 See 'python main.py <command> --help' for more information on a specific command.
